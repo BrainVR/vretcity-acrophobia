@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "nudz-vretcity-acrophobia"
+version = "0.1.0"
+description = ""
+authors = ["Lukáš Hejtmánek <hejtmy@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = ">=3.7, < 3.11"
+streamlit = "^1.0.0"
+numpy = "^1.21.2"
+plotly = "^5.3.1"
+vretcity = "^0.1.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+vretcity = { path = "../nudz-vret-city/", develop = true }
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
