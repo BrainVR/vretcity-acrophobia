@@ -17,8 +17,13 @@ def fetch_online_data():
         return None
 
 
+def get_session_participant(df_sessions, id):
+    participant = df_sessions.loc[df_sessions['id'] == id,]
+    return participant
+
+
 def get_session_info(sel, df_sessions):
-    participant = df_sessions.loc[df_sessions['id'] == sel,]
+    participant = get_session_participant(df_sessions, sel)
     txt = f'''
     Participant {participant['id'].values[0]}(code {participant['user'].values[0]})\n
     {participant['app'].values[0]}, version {participant['version'].values[0]}\n
@@ -39,6 +44,15 @@ def fetch_session_data():
         return None
 
 
+def donwnload_filename(participant):
+    txt = f'{participant["id"].values[0]}-{participant["user"].values[0]}.csv'
+    return txt
+
+
+def download_session_data():
+    return
+
+
 def load_data(file):
     if file is None:
         if 'data_df_session' in st.session_state:
@@ -49,6 +63,10 @@ def load_data(file):
         df_session = loader.load_and_process_log(file)
     set_data(df_session, "Uploaded file")
     return(df_session)
+
+
+def has_valid_session_data():
+    return "data_df_session" in st.session_state and st.session_state["data_df_session"] is not None
 
 
 def set_data(df, source):
@@ -62,8 +80,15 @@ def get_data():
     return st.session_state['data_df_session']
 
 
-def main():
+def option_text(option):
+    # this should be buffered anyway
+    df_sessions = fetch_online_data()
+    participant = df_sessions.loc[df_sessions['id'] == option,]
+    txt = f'{participant["id"].values[0]} ({participant["user"].values[0]})'
+    return txt
 
+
+def main():
 # SETTING UP PAGE -----------
     st.set_page_config(layout="wide")
     st.title("VRETCity log visualiser")
@@ -76,10 +101,18 @@ def main():
     df_sessions = fetch_online_data()
     if df_sessions is not None:
         sel = st.sidebar.selectbox("Select data from online repository", df_sessions['id'][::-1],
-            index=0, key="selected_session")
+            format_func=option_text, index=0, key="selected_session")
         st.sidebar.text(get_session_info(sel, df_sessions))
-    if st.session_state['selected_session'] > 0:
-        st.sidebar.button("Load online data", on_click=fetch_session_data)
+        if st.session_state['selected_session'] > 0:
+            st.sidebar.button("Load online data", on_click=fetch_session_data)
+        if has_valid_session_data():
+            participant = get_session_participant(df_sessions, sel)
+            save_data = st.session_state['data_df_session'].to_csv().encode("utf-8")
+            st.sidebar.download_button("Donwload the data", data=save_data,
+                file_name=donwnload_filename(participant))
+    else:
+        st.sidebar.text("There has been some trouble fetching data from the online repository. Please refresh the webpage or contact the administrator")
+
 
 
 # HANDELING FILE UPLOADS -------
