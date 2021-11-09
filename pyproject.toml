@@ -14,6 +14,7 @@ vretcity = "^0.1.1"
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
 #vretcity = { path = "../nudz-vret-city/", develop = true }
+python-dotenv = "^0.19.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
