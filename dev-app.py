@@ -1,4 +1,6 @@
+import os
 from dotenv import load_dotenv
-load_dotenv()
+from nudz_vretcity_acrophobia import app
 
-import app
+load_dotenv()
+app.main()
