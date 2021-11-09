@@ -1,24 +1,91 @@
+import os
+from requests.sessions import session
 import streamlit as st
 from nudz_vretcity_acrophobia import loader
 from vretcity import visualisations, getters
+from nudz_vretcity_acrophobia import api
+
+
+@st.cache
+def fetch_online_data():
+    print("this is running")
+    token = os.environ['TOKEN']
+    try:
+        df_sessions = api.get_sessions(token)
+        return df_sessions
+    except:
+        return None
+
+
+def get_session_info(sel, df_sessions):
+    participant = df_sessions.loc[df_sessions['id'] == sel,]
+    txt = f'''
+    Participant {participant['id'].values[0]}(code {participant['user'].values[0]})\n
+    {participant['app'].values[0]}, version {participant['version'].values[0]}\n
+    {participant['created_at'].values[0]}\n
+    Number of events {participant['events_count'].values[0]}
+    '''
+    return txt
+
+
+def fetch_session_data():
+    token = os.environ['TOKEN']
+    id = st.session_state['selected_session']
+    try:
+        df_session = api.get_session_data(token, id)
+        set_data(df_session, f'Online data from participant {id}')
+        return df_session
+    except:
+        return None
+
 
 def load_data(file):
     if file is None:
         if 'data_df_session' in st.session_state:
             return st.session_state["data_df_session"]
         else:
-            return loader.load_and_process_log("example-data/example-pc.csv")
-    df_session = loader.load_and_process_log(file)
-    st.session_state["data_df_session"] = df_session
+            df_session = loader.load_and_process_log("example-data/example-pc.csv")
+    else:
+        df_session = loader.load_and_process_log(file)
+    set_data(df_session, "Uploaded file")
     return(df_session)
 
 
+def set_data(df, source):
+    st.session_state["loaded_data"] = source
+    st.session_state["data_df_session"] = df
+
+
+def get_data():
+    if 'data_df_session' not in st.session_state:
+        return None
+    return st.session_state['data_df_session']
+
+
 def main():
+
+# SETTING UP PAGE -----------
     st.set_page_config(layout="wide")
     st.title("VRETCity log visualiser")
+    if get_data() is not None:
+        st.subheader(st.session_state["loaded_data"])
     st.sidebar.write("Please upload your log file below and wait a few moments. ")
     file = st.sidebar.file_uploader("Upload file")
-    df_session = load_data(file)
+
+# ONLINE SELECTIOn --------
+    df_sessions = fetch_online_data()
+    if df_sessions is not None:
+        sel = st.sidebar.selectbox("Select data from online repository", df_sessions['id'][::-1],
+            index=0, key="selected_session")
+        st.sidebar.text(get_session_info(sel, df_sessions))
+    if st.session_state['selected_session'] > 0:
+        st.sidebar.button("Load online data", on_click=fetch_session_data)
+
+
+# HANDELING FILE UPLOADS -------
+    if file is not None:
+        load_data(file)
+    df_session = get_data()
     if df_session is None:
         return
     st.write("First few lines of the file")
