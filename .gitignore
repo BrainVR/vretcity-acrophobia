@@ -1,5 +1,5 @@
 test-data/
-
+.env
 poetry.lock
 
 # PYTHON --------------
